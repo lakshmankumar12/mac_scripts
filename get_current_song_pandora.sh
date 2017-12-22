@@ -5,6 +5,8 @@ result=$(osascript <<EOF
         set songtitle to ""
         set songartist to ""
         set songalbum to ""
+        set elapsedtime to ""
+        set tottime to ""
         set found_video to false
         set window_list to every window
         repeat with the_window in window_list
@@ -13,11 +15,13 @@ result=$(osascript <<EOF
             end if
             set tab_list to every tab in the_window
             repeat with the_tab in tab_list
-                if the title of the_tab contains "Pandora Plus" then
+                if the title of the_tab contains "Pandora" then
                     tell the_tab
                     set songtitle to (execute javascript "var outputtitle = document.querySelector('[data-qa=\"playing_track_title\"]').innerHTML; outputtitle;")
                     set songartist to (execute javascript "var outputartist = document.querySelector('[data-qa=\"playing_artist_name\"]').innerHTML; outputartist;")
                     set songalbum to (execute javascript "var outputalbum = document.querySelector('[data-qa=\"playing_album_name\"]').innerHTML; outputalbum;")
+                    set elapsedtime to (execute javascript "var elapsedtime = document.querySelector('[data-qa=\"elapsed_time\"]').innerHTML; elapsedtime;")
+                    set tottime to (execute javascript "var tottime = document.querySelector('[data-qa=\"remaining_time\"]').innerHTML; tottime;")
                     end tell
                     set found_video to true
                     exit repeat
@@ -25,13 +29,15 @@ result=$(osascript <<EOF
             end repeat
         end repeat
     end tell
-    return songtitle & ":" & songartist & ":" & songalbum
+    return songtitle & "\`" & songartist & "\`" & songalbum & "\`" & elapsedtime & "\`" & tottime
 EOF
 )
 
 if [ $? -ne 0 ] ; then
     echo "No cigar :("
 else
-    echo $result | awk -F: ' {artist = gensub(/<\/?div[^>]*>/,"","g",$1); print "Song:   " artist "\nArtist: " $2 "\nAlbum:  " $3 } '
+    echo "Orignal result: $result"
+    echo "------------"
+    echo $result | awk -F\` ' {artist = gensub(/<\/?div[^>]*>/,"","g",$1); print "Song:   " artist "\nArtist: " $2 "\nAlbum:  " $3 "\nElapsed: " $4 "\nTotalTime: " $5} '
 fi
 
