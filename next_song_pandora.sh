@@ -10,7 +10,7 @@ result=$(osascript <<EOF
             end if
             set tab_list to every tab in the_window
             repeat with the_tab in tab_list
-                if the title of the_tab contains "Pandora Plus" then
+                if the title of the_tab contains "Pandora" then
                     tell the_tab
                         execute javascript "var h = document.querySelector('[aria-label=\"Skip\"]');"
                         execute javascript "h.click()"
