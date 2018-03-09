@@ -38,8 +38,6 @@ EOF
 if [ $? -ne 0 ] ; then
     echo "No cigar :("
 else
-    echo "Orignal result: $result"
-    echo "------------"
-    echo $result | /usr/local/bin/gawk -F\` ' {artist = gensub(/<\/?div[^>]*>/,"","g",$1); print "Song:   " artist "\nArtist: " $2 "\nAlbum:  " $3 "\nElapsed: " $4 "\nTotalTime: " $5 "\nCurrently " $6 } '
+    python ~/github/mac_scripts/parse_pandora_info.py <(echo -n $result)
 fi
 
