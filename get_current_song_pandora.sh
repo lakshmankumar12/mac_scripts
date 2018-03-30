@@ -38,6 +38,6 @@ EOF
 if [ $? -ne 0 ] ; then
     echo "No cigar :("
 else
-    python ~/github/mac_scripts/parse_pandora_info.py <(echo -n $result)
+    python3 ~/github/mac_scripts/parse_pandora_info.py <(echo -n $result)
 fi
 
