@@ -2,10 +2,11 @@
 
 result=$(osascript <<EOF
             tell application "Google Chrome"
-                set found_video to false
+                set found_tab to false
+                set spotifyUrl to "https://open.spotify.com"
                 set window_list to every window
                 repeat with the_window in window_list
-                    if found_video is equal to true then
+                    if found_tab is equal to true then
                         exit repeat
                     end if
                     set tab_list to every tab in the_window
@@ -16,7 +17,7 @@ result=$(osascript <<EOF
                                 execute javascript "if(h == null) var h = document.querySelector('[aria-label=\"Play\"]');"
                                 execute javascript "h.click()"
                             end tell
-                            set found_video to true
+                            set found_tab to true
                             exit repeat
                         end if
                         if the title of the_tab contains "Saavn" then
@@ -24,7 +25,16 @@ result=$(osascript <<EOF
                                 execute javascript "var h = document.querySelector('#pause');"
                                 execute javascript "h.click()"
                             end tell
-                            set found_video to true
+                            set found_tab to true
+                            exit repeat
+                        end if
+                        if ((URL of the_tab) contains spotifyUrl) then
+                            tell the_tab
+                                execute javascript "var h = document.querySelector('[title=\"Pause\"]');"
+                                execute javascript "if(h == null) var h = document.querySelector('[title=\"Play\"]');"
+                                execute javascript "h.click()"
+                            end tell
+                            set found_tab to true
                             exit repeat
                         end if
                     end repeat
