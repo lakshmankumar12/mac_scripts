@@ -22,7 +22,12 @@ with open(sys.argv[1],'r') as fd:
 with open(sys.argv[2],'w') as fd:
     fd.write(soup.prettify())
 
-trackInfo = soup.findAll("div", {"class": "track-info"})[0]
+trackInfo = soup.findAll("div", {"class": "track-info"})
+if not trackInfo:
+    print ("Is spotify running?")
+    sys.exit(1)
+else:
+    trackInfo = trackInfo[0]
 albumInfo1 = soup.findAll("div", {"class": "media-bd"})
 albumInfo2 = None
 albumArtist2 = None
