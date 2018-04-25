@@ -22,7 +22,12 @@ with open(sys.argv[1],'r') as fd:
 with open(sys.argv[2],'w') as fd:
     fd.write(soup.prettify())
 
-trackDiv = soup.findAll("a", {"class": "nowPlayingTopInfo__current__trackName"})[0]
+trackDiv = soup.findAll("a", {"class": "nowPlayingTopInfo__current__trackName"})
+if not trackDiv:
+    print ("Trouble in getting values")
+    sys.exit(1)
+else:
+    trackDiv = trackDiv[0]
 artistDiv = soup.findAll("a", {"class": "nowPlayingTopInfo__current__artistName"})[0]
 albumDiv = soup.findAll("a", {"class": "nowPlayingTopInfo__current__albumName"})[0]
 elapsedDiv = soup.findAll("span", {"data-qa": "elapsed_time"})[0]
