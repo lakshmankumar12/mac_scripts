@@ -1,24 +1,72 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 from __future__ import print_function
 import fileinput
 import bs4
+import mac_script_helper
+import sys
+import json
 
+bwsrTab = mac_script_helper.BrowserTab('https://www.saavn.com')
 
-for line in fileinput.input():   #this one will pick stdin or if some arg(s) is/are given, it will open that as a file!
-  (title,album,singers,elapsed,total) = line.split("`")
+js = [ '''execute javascript "var title = document.querySelector('#player-track-name')"''',
+       '''execute javascript "var aElem = title.querySelector('a')"''',
+       '''execute javascript "aElem.click()"''',
+     ]
 
-print ("Saavn Song Info\n----------------")
-title_bs4 = bs4.BeautifulSoup(title,'html.parser')
-print ("title: {}".format(title_bs4('a')[0].contents[0]))
+err,page,_ = bwsrTab.sendCommands(js)
+if err != 0:
+    print ("Trouble in getting page-info from saavn")
+    sys.exit(1)
 
-album_bs4 = bs4.BeautifulSoup(album, 'html.parser')
-print ("album: {}".format(album_bs4('a')[0].contents[0]))
+js = [
+      mac_script_helper.SaveDocCmd,
+     ]
 
-singers_bs4 = bs4.BeautifulSoup(singers, 'html.parser')
-singers_str = []
-for i in singers_bs4('a'):
-    singers_str.append(i.contents[0])
-print ("singers: {}".format(",".join(singers_str)))
-print ("elapsed: {}".format(elapsed))
-print ("total: {}".format(total))
+err,page,_ = bwsrTab.sendCommands(js)
+if err != 0:
+    print ("Trouble in getting page-info from saavn")
+    sys.exit(1)
+
+pageSoup = bs4.BeautifulSoup(page, 'html.parser')
+metainfo = pageSoup.findAll("div", {"class": "meta-info"})
+
+with open ('/tmp/a.html','w') as fd:
+    fd.write(pageSoup.prettify())
+
+if not metainfo:
+    print ("Trouble in getting meta-info from page")
+    sys.exit(1)
+metainfo = metainfo[0]
+songInfo = metainfo.findAll("div", {"class": "song-json"})
+if not songInfo:
+    print ("Trouble in getting song-json from page")
+    sys.exit(1)
+songInfo_jsonStr = songInfo[0].get_text()
+songInfo = json.loads(songInfo_jsonStr)
+
+elapsedSoup = pageSoup.find('span', {"id": "track-elapsed"})
+if not elapsedSoup:
+    print ("Trouble in getting track-elapsed from page")
+    sys.exit(1)
+totalSoup = pageSoup.find('span', {"id": "track-time"})
+if not totalSoup:
+    print ("Trouble in getting track-time from page")
+    sys.exit(1)
+
+title = songInfo['title']
+artist = songInfo['singers']
+album = songInfo['album']
+elapsed = elapsedSoup.get_text()
+total = totalSoup.get_text()
+year = songInfo['year']
+
+print (
+'''Saavn Song Info
+---------------
+Title:        {}
+Artist:       {}
+Album:        {}
+Elapsed:      {}
+Total:        {}
+Year:         {}'''.format(title, artist, album, elapsed, total, year))
