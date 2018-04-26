@@ -81,3 +81,23 @@ Year:         {}
 Elapsed:      {}
 Total:        {}
 Playing:      {}'''.format(title, artist, album, albumArtist, year, elapsed, total, play_status))
+
+all_tracks = []
+maxwidth = 10
+all_tracks_div = soup.findAll("div", {"class": "tracklist-col"})
+if all_tracks_div:
+    for d in all_tracks_div:
+        track_name = d.findAll("span", {"class": "tracklist-name"})
+        if track_name:
+            t = track_name[0].get_text()
+            maxwidth = max(maxwidth,len(t))
+            artists = d.findAll("span", {"class": "artists-album"})
+            if artists:
+                a = artists[0].get_text()
+                all_tracks.append((t,a))
+
+if all_tracks:
+    print ("Tracks in Album:")
+    print ("----------------")
+    for (t,a) in all_tracks:
+        print ("{:{width}} | {}".format(t,a,width=maxwidth))
