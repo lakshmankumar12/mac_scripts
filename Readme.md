@@ -3,10 +3,10 @@
 My apple-script collection.
 
 I play music off chrome from mostly
-* [pandora|https://www.pandora.com/]
-* [saavn|https://www.saavn.com]
-* [spotify|https://open.spotify.com]
-* [youtube|https://www.youtube.com/]
+* [pandora](https://www.pandora.com/)
+* [saavn](https://www.saavn.com)
+* [spotify](https://open.spotify.com)
+* [youtube](https://www.youtube.com)
 
 I need a global hotkey to stop/pause music playing. I use quicksilver
 to setup the global hotkey. But quicksilver needs a applicatio to
