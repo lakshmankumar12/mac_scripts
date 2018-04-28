@@ -1,7 +1,8 @@
 #!/bin/bash
 result=$(ps -ef | grep quickplay.py | grep python)
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd  )"
 if [ -z "$result" -o -f /tmp/goToPandora ] ; then
-    /Users/lakshman.narayanan/github/mac_scripts/play_pause_any.applescript
+    $DIR/play_pause_any.applescript
 else
     echo pause | nc -u -w1 127.0.0.1 19999
 fi
