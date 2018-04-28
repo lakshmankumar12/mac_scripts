@@ -1,34 +1,40 @@
 #!/usr/bin/python3
 
-from __future__ import print_function
-import fileinput
+import mac_script_helper
 import bs4
-import re
 import sys
-import pdb
 
+bwsrTab = mac_script_helper.BrowserTab('https://open.spotify.com')
 
-orig_prettify = bs4.BeautifulSoup.prettify
-r = re.compile(r'^(\s*)', re.MULTILINE)
-def prettify(self, encoding=None, formatter="minimal", indent_width=4):
-    return r.sub(r'\1' * indent_width, orig_prettify(self, encoding, formatter))
-bs4.BeautifulSoup.prettify = prettify
+js = [
+        '''execute javascript "var outputtitle_div = document.querySelector('.track-info__name');var outputtitle_a = outputtitle_div.querySelector('a'); outputtitle_a.click(); outputtitle_div;"'''
+     ]
 
-bs4parser="html.parser"
+err,page,_ = bwsrTab.sendCommands(js)
+if err != 0:
+    print ("Trouble in getting page-info from pandora")
+    sys.exit(1)
 
-with open(sys.argv[1],'r') as fd:
-    soup = bs4.BeautifulSoup(fd,bs4parser)
+js = [
+      mac_script_helper.SaveDocCmd,
+     ]
 
-with open(sys.argv[2],'w') as fd:
-    fd.write(soup.prettify())
+err,page,_ = bwsrTab.sendCommands(js)
+if err != 0:
+    print ("Trouble in getting page-info from saavn")
+    sys.exit(1)
 
-trackInfo = soup.findAll("div", {"class": "track-info"})
+pageSoup = bs4.BeautifulSoup(page, 'html.parser')
+with open ('/tmp/a.html','w') as fd:
+    fd.write(pageSoup.prettify())
+
+trackInfo = pageSoup.findAll("div", {"class": "track-info"})
 if not trackInfo:
     print ("Is spotify running?")
     sys.exit(1)
 else:
     trackInfo = trackInfo[0]
-albumInfo1 = soup.findAll("div", {"class": "media-bd"})
+albumInfo1 = pageSoup.findAll("div", {"class": "media-bd"})
 albumInfo2 = None
 albumArtist2 = None
 year2 = None
@@ -41,11 +47,11 @@ if albumInfo1:
         year2 = year1[0]
 trackName = trackInfo.findAll("div", {"class": "track-info__name"})[0]
 artistNames = trackInfo.findAll("div", {"class": "track-info__artists"})[0]
-progress = soup.findAll("div", {"class": "playback-bar__progress-time"})
+progress = pageSoup.findAll("div", {"class": "playback-bar__progress-time"})
 
-pause_btn = soup.findAll("button", {"title": "Pause"})
+pause_btn = pageSoup.findAll("button", {"title": "Pause"})
 if not pause_btn:
-    play_btn = soup.findAll("button", {"title": "Play"})
+    play_btn = pageSoup.findAll("button", {"title": "Play"})
     if play_btn:
         play_status = "Paused"
     else:
@@ -71,7 +77,7 @@ elapsed = progress[0].get_text()
 total = progress[1].get_text()
 
 print ('''\
-Pandora Song Info
+Spotify Song Info
 -----------------
 Title:        {}
 Artist:       {}
@@ -84,14 +90,14 @@ Playing:      {}'''.format(title, artist, album, albumArtist, year, elapsed, tot
 
 all_tracks = []
 maxwidth = 10
-all_tracks_div = soup.findAll("div", {"class": "tracklist-col"})
+all_tracks_div = pageSoup.findAll("div", {"class": ["tracklist-col", "name"]})
 if all_tracks_div:
     for d in all_tracks_div:
         track_name = d.findAll("span", {"class": "tracklist-name"})
         if track_name:
             t = track_name[0].get_text()
             maxwidth = max(maxwidth,len(t))
-            artists = d.findAll("span", {"class": "artists-album"})
+            artists = d.findAll("span", {"class": "second-line"})
             if artists:
                 a = artists[0].get_text()
                 all_tracks.append((t,a))
