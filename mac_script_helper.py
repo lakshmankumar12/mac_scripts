@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 import subprocess
+import argparse
 
 SaveDocCmd = 'set doc to (execute javascript "var h = document.documentElement.innerHTML; h;")'
 
@@ -52,12 +55,9 @@ def execJsCmd(cmd):
     cmd = cmd.strip()
     return cmd
 
-def test_group_of_js():
-    a = BrowserTab('https://open.spotify.com')
+def test_page_download(url):
+    a = BrowserTab(url)
     js = [
-          #'''execute javascript "var h = document.querySelector('[title=\\"Pause\\"]');"''',
-          #'''execute javascript "if(h == null) var h = document.querySelector('[title=\\"Play\\"]');"''',
-          #'''execute javascript "h.click()"''',
           SaveDocCmd,
          ]
     err,page,_ = a.sendCommands(js)
@@ -66,4 +66,11 @@ def test_group_of_js():
             fd.write(page)
 
 if __name__ == "__main__":
-    test_group_of_js()
+
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", help="page to download", default="https://open.spotify.com")
+
+    cmd_options = parser.parse_args()
+
+    test_page_download(cmd_options.url)
