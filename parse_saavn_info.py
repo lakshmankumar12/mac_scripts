@@ -94,22 +94,32 @@ if not totalSoup:
     print ("Trouble in getting track-time from page")
     sys.exit(1)
 
+albumArtist = ""
+albumArtistDiv = metainfo.find("h2", {"class": "page-subtitle"})
+if albumArtistDiv:
+    albumArtistAlone = albumArtistDiv.find("a")
+    if albumArtistAlone:
+        albumArtist = albumArtistAlone.get_text().strip()
+
 title = unescape(songInfo['title'])
 artist = unescape(songInfo['singers'])
 album = unescape(songInfo['album'])
 elapsed = elapsedSoup.get_text()
 total = totalSoup.get_text()
 year = songInfo['year']
+starring = unescape(songInfo['starring'])
 
 print (
 '''Saavn Song Info
 ---------------
-Title:   {}
-Artist:  {}
-Album:   {}
-Elapsed: {}
-Total:   {}
-Year:    {}'''.format(title, artist, album, elapsed, total, year))
+Title:        {}
+Artist:       {}
+Album:        {}
+Album-artist: {}
+Elapsed:      {}
+Total:        {}
+Starring:     {}
+Year:         {}'''.format(title, artist, album, albumArtist, elapsed, total, starring, year))
 
 ol = pageSoup.find("ol", {"class": "track-list"})
 trackList = ol.findAll("li", recursive=False)
