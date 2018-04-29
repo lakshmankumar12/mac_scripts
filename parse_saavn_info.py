@@ -11,7 +11,7 @@ from html import unescape
 
 bwsrTab = mac_script_helper.BrowserTab('https://www.saavn.com')
 
-js = [ '''execute javascript "var title = document.querySelector('#player-track-name')"''',
+js = [ '''execute javascript "var title = document.querySelector('#player-album-name')"''',
        '''execute javascript "var aElem = title.querySelector('a')"''',
        '''execute javascript "aElem.click()"''',
      ]
@@ -39,33 +39,43 @@ while attempt <= 3:
     with open ('/tmp/a.html','w') as fd:
         fd.write(pageSoup.prettify())
 
-    currSongFromBottomPlayer = pageSoup.find('strong', {"id": "player-track-name"})
-    if not currSongFromBottomPlayer:
-        print ("Trouble in getting player-track-name from page .. attempt:{}".format(attempt))
+    currAlbFromBottomPlayer = pageSoup.find('span', {"id": "player-album-name"})
+    if not currAlbFromBottomPlayer:
+        print ("Trouble in getting player-album-name from page .. attempt:{}".format(attempt))
         sleep(0.5*attempt)
         continue
 
-    metainfo = pageSoup.findAll("div", {"class": "meta-info"})
+    metainfo = pageSoup.find("div", {"class": "meta-info"})
     if not metainfo:
         print ("Trouble in getting meta-info from page .. attempt:{}".format(attempt))
         sleep(0.5*attempt)
         continue
 
-    metainfo = metainfo[0]
-    songInfo = metainfo.findAll("div", {"class": "song-json"})
-    if not songInfo:
+    pageTitle = metainfo.find("h1", {"class": "page-title"})
+    if not pageTitle:
+        print ("Trouble in getting page-title from page .. attempt:{}".format(attempt))
+        sleep(0.5*attempt)
+        continue
+
+    if pageTitle.get_text().strip() != currAlbFromBottomPlayer.get_text().strip():
+        print ("Mismatch page info: bottom:{}, top:{} .. attempt:{}".format(unescape(botText), unescape(songInfo['title']), attempt))
+        sleep(0.5*attempt)
+        continue
+
+    currSong = pageSoup.find("li", {"class": "current-song"})
+    if not currSong:
+        print ("Trouble in getting current-song from page .. attempt:{}".format(attempt))
+        sleep(0.5*attempt)
+        continue
+
+    songInfo = currSong.find("div", {"class": "song-json"})
+    if not currSong:
         print ("Trouble in getting song-json from page .. attempt:{}".format(attempt))
         sleep(0.5*attempt)
         continue
 
-    songInfo_jsonStr = songInfo[0].get_text()
+    songInfo_jsonStr = songInfo.get_text()
     songInfo = json.loads(songInfo_jsonStr)
-
-    botText = currSongFromBottomPlayer.get_text()
-    if unescape(botText) != unescape(songInfo['title']):
-        print ("Mismatch page info: bottom:{}, top:{} .. attempt:{}".format(unescape(botText), unescape(songInfo['title']), attempt))
-        sleep(0.5*attempt)
-        continue
 
     break;
 
