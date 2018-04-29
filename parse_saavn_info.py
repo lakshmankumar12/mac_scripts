@@ -57,8 +57,10 @@ while attempt <= 3:
         sleep(0.5*attempt)
         continue
 
-    if pageTitle.get_text().strip() != currAlbFromBottomPlayer.get_text().strip():
-        print ("Mismatch page info: bottom:{}, top:{} .. attempt:{}".format(unescape(botText), unescape(songInfo['title']), attempt))
+    botText = currAlbFromBottomPlayer.get_text().strip()
+    pageTit = pageTitle.get_text().strip()
+    if pageTit != botText:
+        print ("Mismatch page info: bottom:{}, top:{} .. attempt:{}".format(botText, pageTit, attempt))
         sleep(0.5*attempt)
         continue
 
@@ -108,3 +110,26 @@ Album:   {}
 Elapsed: {}
 Total:   {}
 Year:    {}'''.format(title, artist, album, elapsed, total, year))
+
+ol = pageSoup.find("ol", {"class": "track-list"})
+trackList = ol.findAll("li", recursive=False)
+tracks = []
+titmaxwidth = 0
+if trackList:
+    for t in trackList:
+        songInfo = t.find("div", {"class": "song-json"})
+        if not currSong:
+            continue
+
+        songInfo_jsonStr = songInfo.get_text()
+        songInfo = json.loads(songInfo_jsonStr)
+
+        t=unescape(songInfo['title'])
+        a=unescape(songInfo['singers'])
+        tracks.append((t,a))
+        titmaxwidth = max(titmaxwidth, len(t))
+
+if tracks:
+    print ("Other songs in Album:")
+    for n,(t,a) in enumerate(tracks,1):
+        print (" {:2} . {:{titwd}} | {} ".format(n,t,a,titwd=titmaxwidth))
