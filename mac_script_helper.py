@@ -3,33 +3,26 @@
 import subprocess
 import argparse
 
-SaveDocCmd = 'set doc to (execute javascript "var h = document.documentElement.innerHTML; h;")'
+SaveDocCmd = 'set resultStr to (execute javascript "var h = document.documentElement.innerHTML; h;")'
 
 PreCommands='''
-set doc to ""
+set resultStr to ""
 tell application "Google Chrome"
-    set found_tab to false
     set targetUrl to "{}"
-    set window_list to every window
-    repeat with the_window in window_list
-        if found_tab is equal to true then
-            exit repeat
-        end if
-        set tab_list to every tab in the_window
-        repeat with the_tab in tab_list
-            if ((URL of the_tab) contains targetUrl) then
-                tell the_tab
+    repeat with w in windows
+        repeat with t in tabs of w
+            if ((URL of t) starts with targetUrl) then
+                tell t
 '''
 
 PostCommands='''
+                    return resultStr
                 end tell
-                set found_tab to true
-                exit repeat
             end if
         end repeat
     end repeat
 end tell
-return doc
+return resultStr
 '''
 
 class BrowserTab:
