@@ -12,7 +12,7 @@ from daemonize import Daemonize
 
 
 pandScrobbleFileName='/Users/lakshman.narayanan/Downloads/songs-download/English/pandoraScrobble.txt'
-saavnScrobbleFileName='/Users/lakshman.narayanan/Downloads/songs-download/English/saavnScrobble.txt'
+saavnScrobbleFileName='/Users/lakshman.narayanan/Downloads/songs-download/saavn/saavnScrobble.txt'
 scrobbleDebugFileName='/tmp/pandsaavnScrob.html'
 scrobbleErrFileName='/tmp/pandsaavnScrob.err.txt'
 datetimeformat='%Y-%m-%d-%H-%M-%S'
@@ -138,8 +138,8 @@ def getSaavnTitleAlbum(errFile, debugFileName):
             sleep(0.5*attempt)
             continue
 
-        botText = currAlbFromBottomPlayer.get_text().strip()
-        pageTit = pageTitle.get_text().strip()
+        botText = unescape(currAlbFromBottomPlayer.get_text().strip())
+        pageTit = unescape(pageTitle.get_text().strip())
         if pageTit != botText:
             print ("Mismatch page info: bottom:{}, top:{} .. attempt:{}".format(botText, pageTit, attempt), file=errFile)
             sleep(0.5*attempt)

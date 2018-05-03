@@ -46,6 +46,14 @@ if playButton:
         play_status="Playing"
     elif playButton[0]['data-qa'] == "play_button":
         play_status="Paused"
+thumbsUpButton = pageSoup.find("button", {"data-qa": "thumbs_up_button"})
+thumbsUpStatus = "Unknown"
+if thumbsUpButton:
+    if "aria-checked" in thumbsUpButton.attrs:
+        if thumbsUpButton.attrs['aria-checked'] == 'true':
+            thumbsUpStatus = "Yes"
+        elif thumbsUpButton.attrs['aria-checked'] == 'false':
+            thumbsUpStatus = "No"
 
 title = trackDiv.get_text()
 artist = artistDiv.get_text()
@@ -61,4 +69,5 @@ Artist:       {}
 Album:        {}
 Elapsed:      {}
 Total:        {}
-Playing:      {}'''.format(title, artist, album, elapsed, total, play_status))
+Playing:      {}
+ThumbsUp:     {}'''.format(title, artist, album, elapsed, total, play_status, thumbsUpStatus))

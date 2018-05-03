@@ -57,8 +57,8 @@ while attempt <= 3:
         sleep(0.5*attempt)
         continue
 
-    botText = currAlbFromBottomPlayer.get_text().strip()
-    pageTit = pageTitle.get_text().strip()
+    botText = unescape(currAlbFromBottomPlayer.get_text().strip())
+    pageTit = unescape(pageTitle.get_text().strip())
     if pageTit != botText:
         print ("Mismatch page info: bottom:{}, top:{} .. attempt:{}".format(botText, pageTit, attempt))
         sleep(0.5*attempt)
@@ -94,6 +94,14 @@ if not totalSoup:
     print ("Trouble in getting track-time from page")
     sys.exit(1)
 
+status = "Unknown"
+playButton = pageSoup.find('button', {"id": "play"})
+if playButton and "class" in playButton.attrs and "hide" in playButton.attrs['class']:
+    status = "Playing"
+pauseButton = pageSoup.find('button', {"id": "pause"})
+if pauseButton and "class" in pauseButton.attrs and "hide" in pauseButton.attrs['class']:
+    status = "Paused"
+
 albumArtist = ""
 albumArtistDiv = metainfo.find("h2", {"class": "page-subtitle"})
 if albumArtistDiv:
@@ -118,8 +126,9 @@ Album:        {}
 Album-artist: {}
 Elapsed:      {}
 Total:        {}
+Status:       {}
 Starring:     {}
-Year:         {}'''.format(title, artist, album, albumArtist, elapsed, total, starring, year))
+Year:         {}'''.format(title, artist, album, albumArtist, elapsed, total, status, starring, year))
 
 ol = pageSoup.find("ol", {"class": "track-list"})
 trackList = ol.findAll("li", recursive=False)
