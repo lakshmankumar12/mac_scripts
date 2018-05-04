@@ -2,6 +2,7 @@
 
 import subprocess
 import argparse
+import bs4
 
 SaveDocCmd = 'set resultStr to (execute javascript "var h = document.documentElement.innerHTML; h;")'
 
@@ -55,8 +56,9 @@ def test_page_download(url):
          ]
     err,page,_ = a.sendCommands(js)
     if err == 0:
+        pageSoup = bs4.BeautifulSoup(page, 'html.parser')
         with open ('/tmp/a.html','w') as fd:
-            fd.write(page)
+            fd.write(pageSoup.prettify())
 
 if __name__ == "__main__":
 

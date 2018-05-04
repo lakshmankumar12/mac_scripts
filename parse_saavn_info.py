@@ -102,6 +102,13 @@ pauseButton = pageSoup.find('button', {"id": "pause"})
 if pauseButton and "class" in pauseButton.attrs and "hide" in pauseButton.attrs['class']:
     status = "Paused"
 
+likeStatus="no"
+likeButton = pageSoup.find('button', {"id": "like"})
+if likeButton:
+    if 'class' in likeButton.attrs:
+        if 'on' in likeButton.attrs['class']:
+            likeStatus="yes"
+
 albumArtist = ""
 albumArtistDiv = metainfo.find("h2", {"class": "page-subtitle"})
 if albumArtistDiv:
@@ -128,7 +135,8 @@ Elapsed:      {}
 Total:        {}
 Status:       {}
 Starring:     {}
-Year:         {}'''.format(title, artist, album, albumArtist, elapsed, total, status, starring, year))
+LikeStatus:   {}
+Year:         {}'''.format(title, artist, album, albumArtist, elapsed, total, status, starring, likeStatus, year))
 
 ol = pageSoup.find("ol", {"class": "track-list"})
 trackList = ol.findAll("li", recursive=False)

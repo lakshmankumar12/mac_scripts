@@ -15,28 +15,39 @@ if err != 0:
     print ("Trouble in getting page-info from pandora")
     sys.exit(1)
 
-js = [
-      mac_script_helper.SaveDocCmd,
-     ]
+attempt = 0
+pageSoup = None
+trackDiv = None
+artistDiv = None
+albumDiv = None
+while attempt <= 3:
+    attempt += 1
+    js = [
+          mac_script_helper.SaveDocCmd,
+         ]
 
-err,page,_ = bwsrTab.sendCommands(js)
-if err != 0:
-    print ("Trouble in getting page-info from saavn")
+    err,page,_ = bwsrTab.sendCommands(js)
+    if err != 0:
+        print ("Trouble in getting page-info from saavn")
+        sys.exit(1)
+
+    pageSoup = bs4.BeautifulSoup(page, 'html.parser')
+    with open ('/tmp/a.html','w') as fd:
+        fd.write(pageSoup.prettify())
+
+    trackDiv = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__trackName"})
+    if not trackDiv:
+        print ("Trouble in getting now-playing track info .. attempt:{}".format(attempt))
+        continue
+
+    artistDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__artistName"})[0]
+    albumDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__albumName"})[0]
+    break
+
+if attempt > 3:
+    print ("Too many attempts:{}".format(attempt))
     sys.exit(1)
 
-pageSoup = bs4.BeautifulSoup(page, 'html.parser')
-with open ('/tmp/a.html','w') as fd:
-    fd.write(pageSoup.prettify())
-
-trackDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__trackName"})
-if not trackDiv:
-    print ("Trouble in getting values")
-    sys.exit(1)
-else:
-    trackDiv = trackDiv[0]
-
-artistDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__artistName"})[0]
-albumDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__albumName"})[0]
 elapsedDiv = pageSoup.findAll("span", {"data-qa": "elapsed_time"})[0]
 totalDiv = pageSoup.findAll("span", {"data-qa": "remaining_time"})[0]
 playButton = pageSoup.findAll("button", {"aria-label": "Play"})
@@ -61,6 +72,56 @@ album = albumDiv.get_text()
 elapsed = elapsedDiv.get_text()
 total = totalDiv.get_text()
 
+attempt = 0
+year = ""
+while attempt <= 3:
+    attempt += 1
+
+    js = [
+           '''execute javascript "var albumClick = document.querySelector('.nowPlayingTopInfo__current__albumName'); albumClick.click();"'''
+         ]
+
+    err,page,_ = bwsrTab.sendCommands(js)
+    if err != 0:
+        print ("Trouble in getting page-info from saavn")
+        sys.exit(1)
+
+    js = [
+            '''execute javascript "var fullDisc = document.querySelector('[data-qa=\\"backstage_grid_show_more_button\\"]');"''',
+            '''set resultStr to (execute javascript "if (fullDisc != null ) { fullDisc.click(); fullDisc.innerText; }")'''
+         ]
+
+    err,page,_ = bwsrTab.sendCommands(js)
+    if err != 0:
+        print ("Trouble in getting page-info from saavn")
+        sys.exit(1)
+
+    if page.strip() != "See Full Discography":
+        print ("Waiting for album page to show up : {}".format(page))
+        continue
+
+    js = [
+          mac_script_helper.SaveDocCmd,
+         ]
+
+    err,page,errInfo = bwsrTab.sendCommands(js)
+    if err != 0:
+        print ("Trouble in getting page-info from album page")
+        sys.exit(1)
+
+    pageSoup = bs4.BeautifulSoup(page, 'html.parser')
+    with open ('/tmp/a.html','w') as fd:
+        fd.write(pageSoup.prettify())
+
+    allAlbums = pageSoup.findAll("div", {"class": ["BackstageGridItem","BackstageGridItem--expanded"]})
+    for albDiv in allAlbums:
+        first = albDiv.find("a", {"class": "BackstageGridItem__text__first"})
+        if first.get_text() == album:
+            yearDiv = albDiv.find("a", {"class": "BackstageGridItem__text__second"})
+            year = yearDiv.get_text()
+
+    break
+
 print ('''\
 Pandora Song Info
 -----------------
@@ -70,4 +131,5 @@ Album:        {}
 Elapsed:      {}
 Total:        {}
 Playing:      {}
-ThumbsUp:     {}'''.format(title, artist, album, elapsed, total, play_status, thumbsUpStatus))
+Year:         {}
+ThumbsUp:     {}'''.format(title, artist, album, elapsed, total, play_status, year, thumbsUpStatus))
