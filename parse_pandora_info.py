@@ -28,7 +28,7 @@ while attempt <= 3:
 
     err,page,_ = bwsrTab.sendCommands(js)
     if err != 0:
-        print ("Trouble in getting page-info from saavn")
+        print ("Trouble in getting page-info from pandora")
         sys.exit(1)
 
     pageSoup = bs4.BeautifulSoup(page, 'html.parser')
@@ -83,22 +83,8 @@ while attempt <= 3:
 
     err,page,_ = bwsrTab.sendCommands(js)
     if err != 0:
-        print ("Trouble in getting page-info from saavn")
+        print ("Trouble in getting page-info from pandora")
         sys.exit(1)
-
-    js = [
-            '''execute javascript "var fullDisc = document.querySelector('[data-qa=\\"backstage_grid_show_more_button\\"]');"''',
-            '''set resultStr to (execute javascript "if (fullDisc != null ) { fullDisc.click(); fullDisc.innerText; }")'''
-         ]
-
-    err,page,_ = bwsrTab.sendCommands(js)
-    if err != 0:
-        print ("Trouble in getting page-info from saavn")
-        sys.exit(1)
-
-    if page.strip() != "See Full Discography":
-        print ("Waiting for album page to show up : {}".format(page))
-        continue
 
     js = [
           mac_script_helper.SaveDocCmd,
@@ -114,11 +100,22 @@ while attempt <= 3:
         fd.write(pageSoup.prettify())
 
     allAlbums = pageSoup.findAll("div", {"class": ["BackstageGridItem","BackstageGridItem--expanded"]})
+    if not allAlbums:
+        print ("Yet to load page fully .. attempt : {}".format(attempt))
+        continue
+
     for albDiv in allAlbums:
         first = albDiv.find("a", {"class": "BackstageGridItem__text__first"})
         if first.get_text() == album:
             yearDiv = albDiv.find("a", {"class": "BackstageGridItem__text__second"})
             year = yearDiv.get_text()
+
+    allTracks = pageSoup.findAll("div", {"data-qa": "backstage_album_track"})
+    tracksInAlb = []
+    for trackDiv in allTracks:
+        titDiv = trackDiv.find("a")
+        durDiv = trackDiv.find("div", {"class": "BackstageAlbumTrack__trackDuration"})
+        tracksInAlb.append((titDiv.get_text().strip(), durDiv.get_text().strip()))
 
     break
 
@@ -133,3 +130,10 @@ Total:        {}
 Playing:      {}
 Year:         {}
 ThumbsUp:     {}'''.format(title, artist, album, elapsed, total, play_status, year, thumbsUpStatus))
+
+if tracksInAlb:
+    print("Other songs in alb")
+    print("------------------")
+    for n,(t,d) in enumerate(tracksInAlb):
+        print("{}. {}  {}".format(n,d,t))
+
