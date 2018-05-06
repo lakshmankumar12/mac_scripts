@@ -74,6 +74,8 @@ total = totalDiv.get_text()
 
 attempt = 0
 year = ""
+tracksInAlb = []
+discography  = []
 while attempt <= 3:
     attempt += 1
 
@@ -104,20 +106,35 @@ while attempt <= 3:
         print ("Yet to load page fully .. attempt : {}".format(attempt))
         continue
 
+    discography = []
     for albDiv in allAlbums:
         first = albDiv.find("a", {"class": "BackstageGridItem__text__first"})
-        if first.get_text() == album:
-            yearDiv = albDiv.find("a", {"class": "BackstageGridItem__text__second"})
+        yearDiv = albDiv.find("a", {"class": "BackstageGridItem__text__second"})
+        alb = first.get_text().strip()
+        yr  = yearDiv.get_text().strip()
+        discography.append((alb,yr))
+        if alb == album:
             year = yearDiv.get_text()
 
     allTracks = pageSoup.findAll("div", {"data-qa": "backstage_album_track"})
-    tracksInAlb = []
     for trackDiv in allTracks:
         titDiv = trackDiv.find("a")
         durDiv = trackDiv.find("div", {"class": "BackstageAlbumTrack__trackDuration"})
         tracksInAlb.append((titDiv.get_text().strip(), durDiv.get_text().strip()))
 
     break
+
+if tracksInAlb:
+    print("Other songs in alb")
+    print("------------------")
+    for n,(t,d) in enumerate(tracksInAlb,1):
+        print("{}. {}  {}".format(n,d,t))
+
+if discography:
+    print("Discography")
+    print("-----------")
+    for n,(a,y) in enumerate(discography,1):
+        print ("{}. {}  {}".format(n,y,a))
 
 print ('''\
 Pandora Song Info
@@ -130,10 +147,4 @@ Total:        {}
 Playing:      {}
 Year:         {}
 ThumbsUp:     {}'''.format(title, artist, album, elapsed, total, play_status, year, thumbsUpStatus))
-
-if tracksInAlb:
-    print("Other songs in alb")
-    print("------------------")
-    for n,(t,d) in enumerate(tracksInAlb):
-        print("{}. {}  {}".format(n,d,t))
 

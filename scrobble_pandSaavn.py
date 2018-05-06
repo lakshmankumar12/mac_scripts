@@ -55,9 +55,9 @@ def getPandoraTitleAlbum(errFile, pageDebugFileName):
     artistDiv = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__artistName"})
     albumDiv = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__albumName"})
 
-    title = trackDiv.get_text()
-    artist = artistDiv.get_text()
-    album = albumDiv.get_text()
+    title = trackDiv.get_text().strip()
+    artist = artistDiv.get_text().strip()
+    album = albumDiv.get_text().strip()
 
     return (title, artist, album)
 
@@ -71,20 +71,22 @@ def getLastScrobbledInfo(scrobbleFileName):
             lastLine = line
     except FileNotFoundError:
         pass
-    if not lastLine:
-        return None
-    lastLineInfo = lastLine.strip().split('`')
-    scrobTime = datetime.datetime.strptime(lastLineInfo[0],datetimeformat)
-    return (lastLineInfo[0], lastLineInfo[1], lastLineInfo[2], lastLineInfo[3])
+    if lastLine:
+        lastLine = lastLine.strip()
+        firstDemar = lastLine.find('`')
+        lastLine = lastLine[firstDemar+1:]
+    return lastLine
 
-def workOnScrobble(scrobbleErr, scrobbleFileName, title, artist, album):
+
+def workOnScrobble(scrobbleErr, scrobbleFileName, toAdd):
     lastScrobbled = getLastScrobbledInfo(scrobbleFileName)
-    print ("Got lastScrobbled info as {}".format(lastScrobbled),file=scrobbleErr)
+    newline='`'.join(toAdd)
+    print ("Got lastScrobbled info as {} and newline is {}".format(lastScrobbled, newline),file=scrobbleErr)
     if lastScrobbled:
-        if title == lastScrobbled[1] and artist == lastScrobbled[2] and album == lastScrobbled[3]:
+        if lastScrobbled == newline:
             return;
     nowStr = datetime.datetime.now().strftime(datetimeformat)
-    newline='`'.join([nowStr,title,artist,album])
+    newline = nowStr + '`' + newline
     print ("Updating {} in {} file".format(newline, scrobbleFileName), file=scrobbleErr)
     newline+='\n'
     with open (scrobbleFileName, 'a') as fd:
@@ -169,22 +171,23 @@ def getSaavnTitleAlbum(errFile, debugFileName):
     title = unescape(songInfo['title'])
     artist = unescape(songInfo['singers'])
     album = unescape(songInfo['album'])
+    permaUrl = unescape(songInfo['perma_url'])
 
-    return (title, artist, album)
+    return (title, artist, album, permaUrl)
 
 def scrobble():
     with open (scrobbleErrFileName, 'a') as scrobbleErr:
         print ("Waking up at {}".format(datetime.datetime.now().strftime(datetimeformat)), file=scrobbleErr)
-        (title, artist, album) = getPandoraTitleAlbum(scrobbleErr, scrobbleDebugFileName)
-        if title:
-            workOnScrobble(scrobbleErr, pandScrobbleFileName, title, artist, album)
+        toAdd = getPandoraTitleAlbum(scrobbleErr, scrobbleDebugFileName)
+        if toAdd[0]:
+            workOnScrobble(scrobbleErr, pandScrobbleFileName, toAdd)
             return
-        elif not artist:
+        elif not toAdd[1]:
             print ("Pandora gave both title and artist empty", file=scrobbleErr)
             return
-        (title, artist, album) = getSaavnTitleAlbum(scrobbleErr, scrobbleDebugFileName)
-        if title:
-            workOnScrobble(scrobbleErr, saavnScrobbleFileName, title, artist, album)
+        toAdd = getSaavnTitleAlbum(scrobbleErr, scrobbleDebugFileName)
+        if toAdd[0]:
+            workOnScrobble(scrobbleErr, saavnScrobbleFileName, toAdd)
 
 def main():
     while True:
