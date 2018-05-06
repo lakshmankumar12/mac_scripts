@@ -8,6 +8,7 @@ from html import unescape
 import json
 import datetime
 from daemonize import Daemonize
+import signal
 
 
 
@@ -189,7 +190,13 @@ def scrobble():
         if toAdd[0]:
             workOnScrobble(scrobbleErr, saavnScrobbleFileName, toAdd)
 
+def signal_handler(signal, frame):
+    with open (scrobbleErrFileName, 'a') as scrobbleErr:
+        print ("Signalled at {}".format(datetime.datetime.now().strftime(datetimeformat)), file=scrobbleErr)
+    scrobble()
+
 def main():
+    signal.signal(signal.SIGUSR1, signal_handler)
     while True:
         scrobble()
         sleep(60)
