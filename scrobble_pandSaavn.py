@@ -48,10 +48,15 @@ def getPandoraTitleAlbum(errFile, pageDebugFileName):
     with open (pageDebugFileName,'w') as fd:
         fd.write(pageSoup.prettify())
 
-    trackDiv = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__trackName"})
+    trackDivParent = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__trackName"})
+    if not trackDivParent:
+        print ("Trouble in getting now-playing track info .. attempt:{}".format(attempt))
+        return (None, -1, None)
+    trackDiv = trackDivParent.find("div", {"class": "Marquee__wrapper__content"})
     if not trackDiv:
-        print ("Trouble in getting values", file=errFile)
-        return (None,None,None)
+        trackDiv = trackDivParent.find("div", {"class": "Marquee__wrapper__content__child"})
+        if not trackDiv:
+            trackDiv = trackDivParent
 
     artistDiv = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__artistName"})
     albumDiv = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__albumName"})
