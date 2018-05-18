@@ -10,10 +10,9 @@ tell application "Google Chrome"
         repeat with t in tabs of w
             if URL of t starts with pandoraUrl then
                 tell t
-                    execute javascript "var h = document.querySelector('[aria-label=\"Pause\"]');"
-                    execute javascript "if(h == null) var h = document.querySelector('[aria-label=\"Play\"]');"
-                    execute javascript "h.click()"
-                    return
+                    execute javascript "var h = document.querySelector('[data-qa=\"thumbs_down_button\"]'); h.click()"
+                    set resultStr to "Clicked thumbs down in Pandora"
+                    return resultStr
                 end tell
             end if
             if URL of t starts with youtubeUrl then
