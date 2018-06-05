@@ -6,6 +6,7 @@ tell application "Google Chrome"
     set pandoraUrl to "https://www.pandora.com"
     set saavnUrl to "https://www.saavn.com"
     set youtubeUrl to "https://www.youtube.com/"
+    set youtubeMusicUrl to "https://music.youtube.com"
     repeat with w in windows
         repeat with t in tabs of w
             if URL of t starts with pandoraUrl then
@@ -20,6 +21,13 @@ tell application "Google Chrome"
                 tell t
                     execute javascript "var h = document.querySelector('[aria-label=\"Pause\"]');"
                     execute javascript "if(h == null) var h = document.querySelector('[aria-label=\"Play\"]');"
+                    execute javascript "h.click()"
+                end tell
+                return
+            end if
+            if URL of t starts with youtubeMusicUrl then
+                tell t
+                    execute javascript "var h = document.querySelector('.play-pause-button');"
                     execute javascript "h.click()"
                 end tell
                 return
