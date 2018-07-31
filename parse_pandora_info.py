@@ -101,7 +101,7 @@ def getPandoraNowPlayingDetails(bwsrTab, pageSoup):
     return (title, artist, album, elapsed, total, play_status, thumbsUpStatus, artUrl)
 
 
-def getPandoraAlbumPage(bwsrTab, album):
+def getPandoraAlbumPageOld(bwsrTab, album):
     attempt = 0
     year = ""
     tracksInAlb = []
@@ -154,7 +154,72 @@ def getPandoraAlbumPage(bwsrTab, album):
 
         break
 
-    return (year, discography, tracksInAlb)
+    return (year, discography, tracksInAlb, "", "")
+
+def getPandoraAlbumPage(bwsrTab, album):
+    attempt = 0
+    year = ""
+    tracksInAlb = []
+    description = ""
+    while attempt <= 3:
+        attempt += 1
+
+        js = [
+               '''execute javascript "var albumClick = document.querySelector('.nowPlayingTopInfo__current__albumName'); albumClick.click();"'''
+             ]
+
+        err,page,_ = bwsrTab.sendCommands(js)
+        if err != 0:
+            print ("Trouble in getting page-info from pandora")
+            sys.exit(1)
+
+        js = [
+              mac_script_helper.SaveDocCmd,
+             ]
+
+        err,page,errInfo = bwsrTab.sendCommands(js)
+        if err != 0:
+            print ("Trouble in getting page-info from album page")
+            sys.exit(1)
+
+        pageSoup = bs4.BeautifulSoup(page, 'html.parser')
+        with open ('/tmp/b.html','w') as fd:
+            fd.write(pageSoup.prettify())
+
+        backstageLayout = pageSoup.find("div", {"class": "BackstageLayout__body__main"})
+        if not backstageLayout:
+            print ("Yet to load page fully .. Not getting backstageLayout .. attempt : {}".format(attempt))
+            continue
+
+        num_and_year_songs = backstageLayout.find("span", {"data-qa": "header_static_text_subtitle"})
+        if not num_and_year_songs:
+            print ("Yet to load page fully .. Not getting num_and_year_songs .. attempt : {}".format(attempt))
+            continue
+
+        num_and_year_songs_val = num_and_year_songs.get_text().split('-')
+        if not num_and_year_songs_val or len(num_and_year_songs_val) != 2:
+            print ("Yet to load page fully .. num_and_year_songs malformed .. attempt : {}".format(attempt))
+            continue
+
+        year = num_and_year_songs_val[1].strip()
+        num_songs = num_and_year_songs_val[0].strip()
+
+        desc_div = backstageLayout.find("div", {"class": "DescriptionBackstage__content__text"})
+        if desc_div:
+            description = desc_div.get_text().strip()
+
+        songsDiv = backstageLayout.findAll("div", {"data-qa": "row_item"})
+        if not songsDiv:
+            print ("Yet to load page fully .. Not getting songsDiv .. attempt : {}".format(attempt))
+            continue
+
+        for s in songsDiv:
+            tit = s.find("a", {"data-qa": "backstage_album_track_link"})
+            dur = s.find("span", {"class": "RowItem__rightCol__child--default"})
+            tracksInAlb.append((tit.get_text(),dur.get_text()))
+        break
+
+    return (year, None, tracksInAlb, description, num_songs)
 
 OutputFormatString = '''\
 Pandora Song Info
@@ -175,7 +240,7 @@ def main():
     if not pageSoup:
         sys.exit(1)
     (title, artist, album, elapsed, total, play_status, thumbsUpStatus, artUrl)  = getPandoraNowPlayingDetails(bwsrTab, pageSoup)
-    (year, discography, tracksInAlb)  = getPandoraAlbumPage(bwsrTab, album)
+    (year, discography, tracksInAlb, description, num_songs)  = getPandoraAlbumPage(bwsrTab, album)
 
     if discography:
         print("Discography")
@@ -183,11 +248,20 @@ def main():
         for n,(a,y) in enumerate(discography,1):
             print ("{}. {}  {}".format(n,y,a))
 
+    if num_songs:
+        print (num_songs)
+        print ("-----------")
+
     if tracksInAlb:
         print("Other songs in alb")
         print("------------------")
         for n,(t,d) in enumerate(tracksInAlb,1):
             print("{}. {}  {}".format(n,d,t))
+
+    if description:
+        print("Description")
+        print("-----------")
+        print(description)
 
     print (OutputFormatString.format(title, artist, album, elapsed, total, play_status, year, artUrl, thumbsUpStatus))
 

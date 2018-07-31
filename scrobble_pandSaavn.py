@@ -9,6 +9,7 @@ import json
 import datetime
 from daemonize import Daemonize
 import signal
+import subprocess
 
 
 
@@ -18,6 +19,8 @@ scrobbleDebugFileName='/tmp/pandsaavnScrob.html'
 scrobbleErrFileName='/tmp/pandsaavnScrob.err.txt'
 datetimeformat='%Y-%m-%d-%H-%M-%S'
 scrobblePidFile='/tmp/pandsaavnScrob.pid'
+lookoutListFile='/Users/lakshman.narayanan/Downloads/songs-download/English/Lookout.txt'
+lookoutList=[]
 
 
 def getPandoraTitleAlbum(errFile, pageDebugFileName):
@@ -97,6 +100,11 @@ def workOnScrobble(scrobbleErr, scrobbleFileName, toAdd):
     newline+='\n'
     with open (scrobbleFileName, 'a') as fd:
         fd.write(newline)
+    for lookout in lookoutList:
+        if toAdd[0] in lookout:
+            print ("Found lookout alert on line {}".format(newline), file=scrobbleErr)
+            subprocess.check_output(["bash", "-c", ". ~/.bashrc.local ; alert 'Found a lookout in {}'".format(newline)])
+            break
 
 def getSaavnTitleAlbum(errFile, debugFileName):
     bwsrTab = mac_script_helper.BrowserTab('https://www.saavn.com')
@@ -195,13 +203,31 @@ def scrobble():
         if toAdd[0]:
             workOnScrobble(scrobbleErr, saavnScrobbleFileName, toAdd)
 
-def signal_handler(signal, frame):
-    with open (scrobbleErrFileName, 'a') as scrobbleErr:
-        print ("Signalled at {}".format(datetime.datetime.now().strftime(datetimeformat)), file=scrobbleErr)
-    scrobble()
+def signal_handler(signum, frame):
+    if signum == signal.SIGUSR1:
+        with open (scrobbleErrFileName, 'a') as scrobbleErr:
+            print ("Signalled at {}".format(datetime.datetime.now().strftime(datetimeformat)), file=scrobbleErr)
+        scrobble()
+    elif signum == signal.SIGUSR2:
+        with open (scrobbleErrFileName, 'a') as scrobbleErr:
+            print ("Updating lookout on SIGUSR2", file=scrobbleErr)
+        prepareLookout()
+
+def prepareLookout():
+    global lookoutList
+    lookoutList=[]
+    try:
+        with open (lookoutListFile, 'r') as fd:
+            for line in fd:
+                lookoutList.append(line.strip())
+    except FileNotFoundError:
+        with open (scrobbleErrFileName, 'a') as scrobbleErr:
+            print ("No {} file present -- skipping lookouts".format(lookoutListFile), file=scrobbleErr)
 
 def main():
     signal.signal(signal.SIGUSR1, signal_handler)
+    signal.signal(signal.SIGUSR2, signal_handler)
+    prepareLookout()
     while True:
         scrobble()
         sleep(60)
