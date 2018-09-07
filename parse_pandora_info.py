@@ -4,6 +4,7 @@ import mac_script_helper
 import bs4
 import sys
 import re
+import json
 
 
 
@@ -186,6 +187,16 @@ def getPandoraAlbumPage(bwsrTab, album):
         with open ('/tmp/b.html','w') as fd:
             fd.write(pageSoup.prettify())
 
+        jsoninfodiv = pageSoup.find("script", {"type": "application/ld+json"})
+        if not jsoninfodiv:
+            print ("Yet to load page fully .. Not getting json info .. attempt : {}".format(attempt))
+            continue
+
+        albumInfo = json.loads(jsoninfodiv.get_text())
+        if "description" in albumInfo:
+            descriptionSoup = bs4.BeautifulSoup(albumInfo["description"], 'html.parser')
+            description = descriptionSoup.get_text()
+
         backstageLayout = pageSoup.find("div", {"class": "BackstageLayout__body__main"})
         if not backstageLayout:
             print ("Yet to load page fully .. Not getting backstageLayout .. attempt : {}".format(attempt))
@@ -203,10 +214,6 @@ def getPandoraAlbumPage(bwsrTab, album):
 
         year = num_and_year_songs_val[1].strip()
         num_songs = num_and_year_songs_val[0].strip()
-
-        desc_div = backstageLayout.find("div", {"class": "DescriptionBackstage__content__text"})
-        if desc_div:
-            description = desc_div.get_text().strip()
 
         songsDiv = backstageLayout.findAll("div", {"data-qa": "row_item"})
         if not songsDiv:
