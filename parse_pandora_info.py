@@ -40,11 +40,19 @@ def getPandoraNowPlayingPage(bwsrTab):
 
         trackDivParent = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__trackName"})
         if not trackDivParent:
-            print ("Trouble in getting now-playing track info .. attempt:{}".format(attempt))
-            continue
+            trackDivParent = pageSoup.find("a", {"class": "HeroCard__sourceInfo__trackName"})
+            if not trackDivParent:
+                print ("Trouble in getting now-playing track info .. attempt:{}".format(attempt))
+                continue
+            else:
+                artistDivClass = "HeroCard__sourceInfo__artist"
+                albumDivClass = "HeroCard__sourceInfo__album"
+        else:
+            artistDivClass = "nowPlayingTopInfo__current__artistName"
+            albumDivClass = "nowPlayingTopInfo__current__albumName"
 
-        artistDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__artistName"})[0]
-        albumDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__albumName"})[0]
+        artistDiv = pageSoup.findAll("a", {"class": artistDivClass})[0]
+        albumDiv = pageSoup.findAll("a", {"class": albumDivClass})[0]
         break
 
     if attempt > 3:
@@ -55,15 +63,23 @@ def getPandoraNowPlayingPage(bwsrTab):
 
 def getPandoraNowPlayingDetails(bwsrTab, pageSoup):
 
+    onDemand = False
+    artistDivClass = "nowPlayingTopInfo__current__artistName"
+    albumDivClass = "nowPlayingTopInfo__current__albumName"
     trackDiv = None
     trackDivParent = pageSoup.find("a", {"class": "nowPlayingTopInfo__current__trackName"})
+    if not trackDivParent:
+        trackDivParent = pageSoup.find("a", {"class": "HeroCard__sourceInfo__trackName"})
+        artistDivClass = "HeroCard__sourceInfo__artist"
+        albumDivClass = "HeroCard__sourceInfo__album"
+        onDemand = True
     trackDiv = trackDivParent.find("div", {"class": "Marquee__wrapper__content"})
     if not trackDiv:
         trackDiv = trackDivParent.find("div", {"class": "Marquee__wrapper__content__child"})
         if not trackDiv:
             trackDiv = trackDivParent
-    artistDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__artistName"})[0]
-    albumDiv = pageSoup.findAll("a", {"class": "nowPlayingTopInfo__current__albumName"})[0]
+    artistDiv = pageSoup.findAll("a", {"class": artistDivClass})[0]
+    albumDiv = pageSoup.findAll("a", {"class": albumDivClass})[0]
     elapsedDiv = pageSoup.findAll("span", {"data-qa": "elapsed_time"})[0]
     totalDiv = pageSoup.findAll("span", {"data-qa": "remaining_time"})[0]
     playButton = pageSoup.findAll("button", {"aria-label": "Play"})
@@ -85,10 +101,17 @@ def getPandoraNowPlayingDetails(bwsrTab, pageSoup):
                 thumbsUpStatus = "No"
 
     artUrl=""
-    artDiv=pageSoup.find("div", {"data-qa" :"album_active_image"})
-    if artDiv:
-        if 'style' in artDiv.attrs:
-            value = artDiv.attrs['style']
+    value = None
+    if onDemand:
+        artDiv=pageSoup.find("img", {"class": "HeroCard__image"})
+        if artDiv:
+            if 'src' in artDiv.attrs:
+                artUrl = artDiv.attrs['src']
+    else:
+        artDiv=pageSoup.find("div", {"data-qa" :"album_active_image"})
+        if artDiv:
+            if 'style' in artDiv.attrs:
+                value = artDiv.attrs['style']
             matches = re.findall(r'\"(.+?)\"',value)
             if matches:
                 artUrl = matches[0]
@@ -99,7 +122,7 @@ def getPandoraNowPlayingDetails(bwsrTab, pageSoup):
     elapsed = elapsedDiv.get_text()
     total = totalDiv.get_text()
 
-    return (title, artist, album, elapsed, total, play_status, thumbsUpStatus, artUrl)
+    return (title, artist, album, elapsed, total, play_status, thumbsUpStatus, artUrl, onDemand)
 
 
 def getPandoraAlbumPageOld(bwsrTab, album):
@@ -157,11 +180,36 @@ def getPandoraAlbumPageOld(bwsrTab, album):
 
     return (year, discography, tracksInAlb, "", "")
 
+
+def gotoAlbumPage(bwsrTab):
+    attempt = 0
+    while attempt <= 3:
+        attempt += 1
+
+        js = [
+               '''execute javascript "var albumClick = document.querySelector('.NowPlayingOnDemand__trackListHeader');
+                                      var albumClick2 = albumClick.querySelector('.RowItem__centerCol');
+                                      var albumClick3 = albumClick2.querySelector('a'); albumClick3.click();"'''
+             ]
+
+        err,page,_ = bwsrTab.sendCommands(js)
+        if err != 0:
+            print ("Trouble in getting page-info from pandora, attempt:{}".format(attempt))
+            continue;
+
+        break;
+
+    if attempt >= 3:
+        print ("Too many attempts")
+        sys.exit(1)
+
+
 def getPandoraAlbumPage(bwsrTab, album):
     attempt = 0
     year = ""
     tracksInAlb = []
     description = ""
+    num_songs = 0
     while attempt <= 3:
         attempt += 1
 
@@ -187,17 +235,20 @@ def getPandoraAlbumPage(bwsrTab, album):
         with open ('/tmp/b.html','w') as fd:
             fd.write(pageSoup.prettify())
 
-        jsoninfodiv = pageSoup.find("script", {"type": "application/ld+json"})
-        if not jsoninfodiv:
-            print ("Yet to load page fully .. Not getting json info .. attempt : {}".format(attempt))
-            continue
+        try:
+            jsoninfodiv = pageSoup.find("script", {"type": "application/ld+json"})
+            if not jsoninfodiv:
+                print ("Yet to load page fully .. Not getting json info .. attempt : {}".format(attempt))
+                continue
 
-        albumInfo = json.loads(jsoninfodiv.get_text())
-        if "description" in albumInfo:
-            descriptionSoup = bs4.BeautifulSoup(albumInfo["description"], 'html.parser')
-            description = descriptionSoup.get_text()
+            albumInfo = json.loads(jsoninfodiv.get_text())
+            if "description" in albumInfo:
+                descriptionSoup = bs4.BeautifulSoup(albumInfo["description"], 'html.parser')
+                description = descriptionSoup.get_text()
+        except:
+            pass
 
-        backstageLayout = pageSoup.find("div", {"class": "BackstageLayout__body__main"})
+        backstageLayout = pageSoup.find("div", {"class": "BackstageLayout__body"})
         if not backstageLayout:
             print ("Yet to load page fully .. Not getting backstageLayout .. attempt : {}".format(attempt))
             continue
@@ -246,7 +297,9 @@ def main():
     pageSoup = getPandoraNowPlayingPage(bwsrTab)
     if not pageSoup:
         sys.exit(1)
-    (title, artist, album, elapsed, total, play_status, thumbsUpStatus, artUrl)  = getPandoraNowPlayingDetails(bwsrTab, pageSoup)
+    (title, artist, album, elapsed, total, play_status, thumbsUpStatus, artUrl, onDemand)  = getPandoraNowPlayingDetails(bwsrTab, pageSoup)
+    if onDemand:
+        gotoAlbumPage(bwsrTab)
     (year, discography, tracksInAlb, description, num_songs)  = getPandoraAlbumPage(bwsrTab, album)
 
     if discography:
