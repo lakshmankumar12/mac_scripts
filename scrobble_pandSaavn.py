@@ -14,7 +14,7 @@ import subprocess
 
 
 pandScrobbleFileName='/Users/lakshman.narayanan/Downloads/songs-download/English/pandoraScrobble.txt'
-saavnScrobbleFileName='/Users/lakshman.narayanan/Downloads/songs-download/saavn/saavnScrobble.txt'
+saavnScrobbleFileName='/Users/lakshman.narayanan/Downloads/songs-download/JUST-PLAYLISTS-TEXT/saavnscrobbles/saavnScrobble.txt'
 scrobbleDebugFileName='/tmp/pandsaavnScrob.html'
 scrobbleErrFileName='/tmp/pandsaavnScrob.err.txt'
 datetimeformat='%Y-%m-%d-%H-%M-%S'
@@ -107,7 +107,7 @@ def workOnScrobble(scrobbleErr, scrobbleFileName, toAdd):
             break
 
 def getSaavnTitleAlbum(errFile, debugFileName):
-    bwsrTab = mac_script_helper.BrowserTab('https://www.saavn.com')
+    bwsrTab = mac_script_helper.BrowserTab('https://www.jiosaavn.com')
     js = [ '''execute javascript "var title = document.querySelector('#player-album-name')"''',
            '''execute javascript "var aElem = title.querySelector('a')"''',
            '''execute javascript "aElem.click()"''',

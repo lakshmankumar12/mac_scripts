@@ -9,7 +9,7 @@ import json
 from time import sleep
 from html import unescape
 
-bwsrTab = mac_script_helper.BrowserTab('https://www.saavn.com')
+bwsrTab = mac_script_helper.BrowserTab('https://www.jiosaavn.com')
 
 js = [ '''execute javascript "var title = document.querySelector('#player-album-name')"''',
        '''execute javascript "var aElem = title.querySelector('a')"''',

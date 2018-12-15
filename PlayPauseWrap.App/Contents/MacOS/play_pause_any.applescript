@@ -4,7 +4,7 @@ tell application "Google Chrome"
     set found_tab to false
     set spotifyUrl to "https://open.spotify.com"
     set pandoraUrl to "https://www.pandora.com"
-    set saavnUrl to "https://www.saavn.com"
+    set saavnUrl to "https://www.jiosaavn.com/"
     set youtubeUrl to "https://www.youtube.com/"
     set youtubeMusicUrl to "https://music.youtube.com"
     repeat with w in windows
