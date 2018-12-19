@@ -5,6 +5,8 @@ import argparse
 import bs4
 
 SaveDocCmd = 'set resultStr to (execute javascript "var h = document.documentElement.innerHTML; h;")'
+SetUrlCmdStr = 'set resultStr to (execute javascript "this.document.location = \'{}\'")'
+GetUrlCmdStr = 'set resultStr to (execute javascript "this.document.location.href")'
 
 PreCommands='''
 set resultStr to ""
@@ -60,12 +62,38 @@ def test_page_download(url):
         with open ('/tmp/a.html','w') as fd:
             fd.write(pageSoup.prettify())
 
+def set_url(orig_url, set_url):
+    a = BrowserTab(orig_url)
+    urlCmd = SetUrlCmdStr.format(set_url)
+    js = [ urlCmd ]
+    err,page,_ = a.sendCommands(js)
+    if err == 0:
+        print ("Url set")
+    else:
+        print ("Some problem..")
+
+def get_url(url):
+    a = BrowserTab(url)
+    js = [ GetUrlCmdStr ]
+    err,page,_ = a.sendCommands(js)
+    if err == 0:
+        print (page.strip())
+    else:
+        print ("Some problem..")
+
 if __name__ == "__main__":
 
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--url", help="page to download", default="https://open.spotify.com")
+    parser.add_argument("-s", "--set-url", help="url to set")
+    parser.add_argument("-g", "--get-url", help="url to set", action="store_true")
+    parser.add_argument("--url", help="page to match, default is to download, default url is spotify", default="https://open.spotify.com")
 
     cmd_options = parser.parse_args()
 
-    test_page_download(cmd_options.url)
+    if cmd_options.get_url:
+        get_url(cmd_options.url)
+    elif cmd_options.set_url:
+        set_url(cmd_options.url, cmd_options.set_url)
+    else:
+        test_page_download(cmd_options.url)
