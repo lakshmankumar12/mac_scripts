@@ -1,0 +1,2 @@
+#!/bin/bash
+"/Applications/VNC Viewer.app/Contents/MacOS/vncviewer" vnc.corp.aryaka.com:2 &
