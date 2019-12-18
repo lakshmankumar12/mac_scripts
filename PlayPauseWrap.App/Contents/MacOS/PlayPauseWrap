@@ -1,5 +1,5 @@
 #!/bin/bash
-result=$(ps -ef | grep quickplay.py | grep python)
+result=$(ps -ef | grep quickplay.py | grep -i python)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd  )"
 if [ -z "$result" -o -f /tmp/goToPandora ] ; then
     $DIR/play_pause_any.applescript
