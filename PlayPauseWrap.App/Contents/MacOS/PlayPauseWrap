@@ -1,8 +1,13 @@
 #!/bin/bash
-result=$(ps -ef | grep quickplay.py | grep -i python)
+quickplay_running=$(ps -ef | grep quickplay.py | grep -i python)
+spotify_running=$(ps -ef |grep 'Spotify.app/Contents/MacOS/Spotify' | grep -v egrep)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd  )"
-if [ -z "$result" -o -f /tmp/goToPandora ] ; then
+if [ -f /tmp/playpausebrowser ] ; then
     $DIR/play_pause_any.applescript
+elif [ -n "$quickplay_running" ] ; then
+    echo pause | nc -u -w1 127.0.0.1 19999
+elif [ -n "$spotify_running" ] ; then
+    osascript -e 'tell application "spotify" to playpause'
 else
     echo pause | nc -u -w1 127.0.0.1 19999
 fi
