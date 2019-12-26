@@ -7,9 +7,10 @@ if application "Spotify" is running then
     set theName to name of the current track
     set theArtist to artist of the current track
     set theAlbum to album of the current track
-    set theUrl to spotify url of the current track
+    set theLength to duration of the current track
+    set currPos to player position
     try
-      return "♫  " & theName & " - " & theArtist
+      return "♫  " & theName & " - " & theArtist & " - " & currPos & " / " & theLength
     on error err
     end try
   end tell
