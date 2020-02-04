@@ -17,7 +17,7 @@ def getDuration():
     duration=duration//1000
     duration_min=duration // 60
     duration_sec=duration % 60
-    return "{}:{}".format(duration_min,duration_sec)
+    return "{}:{:02d}".format(duration_min,duration_sec)
 
 def getCurrPosition():
     current=getFromSpotifyTrack('player position', from_track=False)
@@ -25,7 +25,7 @@ def getCurrPosition():
     current=int(current)
     current_min=current//60
     current_sec=current%60
-    return "{}:{}".format(current_min,current_sec)
+    return "{}:{:02d}".format(current_min,current_sec)
 
 def getPlayerState():
     state=getFromSpotifyTrack('player state', from_track=False)
