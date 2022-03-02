@@ -1,0 +1,5 @@
+#!/bin/bash
+
+time=$(date +"%H:%M")
+message="Reminder at ${time}: $@"
+/usr/bin/osascript -e "tell application \"System Events\" to display dialog ${message}" > /tmp/debug

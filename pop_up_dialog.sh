@@ -6,9 +6,11 @@ if [ -z "$1" ] ; then
     text="Nothing was set"
 fi
 
+text="Reminder at $(date +%H:%M) : ${text}"
+
 result=$(osascript <<EOF
     set theDialogText to "Hey! " & "$text" & "."
-    display dialog theDialogText
+    display dialog theDialogText with icon caution
 EOF
 )
 

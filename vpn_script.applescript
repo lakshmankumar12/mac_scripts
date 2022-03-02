@@ -2,7 +2,7 @@
 
 #reference: https://neo.works/2017/How-to-login-Cisco-VPN-automatically-on-macOS-High-Sierra/
 
-set vpn_name to "'Aryaka Milpitas'"
+set vpn_name to "'Aryaka Bangalore'"
 set user_name to "lakshman.narayanan"
 set passwd to system attribute "MYPASSWD"
 

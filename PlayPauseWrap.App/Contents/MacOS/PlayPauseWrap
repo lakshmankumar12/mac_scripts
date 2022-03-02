@@ -1,11 +1,14 @@
 #!/bin/bash
+#ytmusic_running=$(ps -ef | grep '[Y]ouTube Music.app')
 quickplay_running=$(ps -ef | grep quickplay.py | grep -i python)
-spotify_running=$(ps -ef |grep 'Spotify.app/Contents/MacOS/Spotify' | grep -v egrep)
+spotify_running=$(ps -ef |grep '[S]potify.app/Contents/MacOS/Spotify')
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd  )"
 if [ -f /tmp/playpausebrowser ] ; then
     $DIR/play_pause_any.applescript
 elif [ -n "$quickplay_running" ] ; then
     echo pause | nc -u -w1 127.0.0.1 19999
+#elif [ -n "$ytmusic_running" ] ; then
+    #$DIR/ytmusicapp.applescript
 elif [ -n "$spotify_running" ] ; then
     osascript -e 'tell application "spotify" to playpause'
 else
